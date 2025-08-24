@@ -8,35 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Guitar-inspired color palette */
+    --background: 25 15% 8%;
+    --foreground: 35 20% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 25 12% 12%;
+    --card-foreground: 35 20% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 25 12% 12%;
+    --popover-foreground: 35 20% 92%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 35 45% 65%;
+    --primary-foreground: 25 15% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 25 8% 18%;
+    --secondary-foreground: 35 20% 92%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 25 8% 18%;
+    --muted-foreground: 35 10% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 45 55% 75%;
+    --accent-foreground: 25 15% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 35 20% 92%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --success: 120 60% 50%;
+    --success-foreground: 35 20% 92%;
 
-    --radius: 0.5rem;
+    --warning: 45 90% 55%;
+    --warning-foreground: 25 15% 8%;
+
+    --border: 25 8% 22%;
+    --input: 25 8% 22%;
+    --ring: 35 45% 65%;
+
+    /* Guitar-specific design tokens */
+    --fretboard: 25 12% 10%;
+    --fret: 0 0% 85%;
+    --string: 0 0% 75%;
+    --string-active: 35 45% 65%;
+    --string-tuned: 120 60% 50%;
+    --string-sharp: 0 75% 60%;
+    --string-flat: 240 75% 60%;
+    
+    /* Wood texture gradient */
+    --wood-gradient: linear-gradient(135deg, hsl(25 20% 15%), hsl(25 15% 12%), hsl(25 18% 14%));
+    --metal-gradient: linear-gradient(90deg, hsl(0 0% 70%), hsl(0 0% 85%), hsl(0 0% 70%));
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -56,33 +80,43 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark mode uses same guitar theme */
+    --background: 20 18% 6%;
+    --foreground: 35 25% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 20 15% 9%;
+    --card-foreground: 35 25% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 20 15% 9%;
+    --popover-foreground: 35 25% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 35 50% 70%;
+    --primary-foreground: 20 18% 6%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 20 10% 15%;
+    --secondary-foreground: 35 25% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 20 10% 15%;
+    --muted-foreground: 35 15% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 45 60% 80%;
+    --accent-foreground: 20 18% 6%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 80% 65%;
+    --destructive-foreground: 35 25% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --success: 120 65% 55%;
+    --success-foreground: 35 25% 95%;
+
+    --warning: 45 95% 60%;
+    --warning-foreground: 20 18% 6%;
+
+    --border: 20 10% 20%;
+    --input: 20 10% 20%;
+    --ring: 35 50% 70%;
+    
+    --fretboard: 20 15% 8%;
+    --wood-gradient: linear-gradient(135deg, hsl(20 25% 12%), hsl(20 20% 8%), hsl(20 22% 10%));
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
