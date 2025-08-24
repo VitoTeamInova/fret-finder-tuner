@@ -55,13 +55,21 @@ export const GuitarTuner = () => {
       <div className="bg-card/95 border-b border-border backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                TeamInova Guitar Tuner
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Professional guitar tuning with multiple tuning options
-              </p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  TeamInova Guitar Tuner
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                  Professional guitar tuning with multiple tuning options
+                </p>
+              </div>
+              
+              {isListening && (
+                <div className="w-48 h-16">
+                  <MicWaveform isActive={isListening} height={64} />
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-4 flex-wrap">
@@ -215,11 +223,6 @@ export const GuitarTuner = () => {
               </div>
             )}
 
-            {isListening && (
-              <div className="mt-4">
-                <MicWaveform isActive={isListening} />
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

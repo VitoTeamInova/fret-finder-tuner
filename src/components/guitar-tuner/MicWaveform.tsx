@@ -54,11 +54,11 @@ export const MicWaveform = ({ isActive, height = 80 }: MicWaveformProps) => {
           ctx.clearRect(0, 0, width, h);
 
           // Background
-          ctx.fillStyle = 'hsla(var(--card) / 0.4)';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
           ctx.fillRect(0, 0, width, h);
 
           // Center line
-          ctx.strokeStyle = 'hsla(var(--border) / 0.6)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
           ctx.lineWidth = 1 * dpr;
           ctx.beginPath();
           ctx.moveTo(0, h / 2);
@@ -67,7 +67,7 @@ export const MicWaveform = ({ isActive, height = 80 }: MicWaveformProps) => {
 
           // Waveform
           ctx.lineWidth = 2 * dpr;
-          ctx.strokeStyle = 'hsl(var(--primary))';
+          ctx.strokeStyle = '#10b981';
           ctx.beginPath();
 
           const sliceWidth = width / bufferLength;
