@@ -10,6 +10,7 @@ import { usePitchDetection } from './hooks/usePitchDetection';
 import { useAudioPlayback } from './hooks/useAudioPlayback';
 import { TUNINGS, Tuning } from './types';
 import { cn } from '@/lib/utils';
+import { MicWaveform } from './MicWaveform';
 
 export const GuitarTuner = () => {
   const [selectedTuning, setSelectedTuning] = useState<Tuning>(TUNINGS[0]);
@@ -211,6 +212,12 @@ export const GuitarTuner = () => {
                 <div className="text-2xl font-bold text-primary">
                   {currentPitch.note}
                 </div>
+              </div>
+            )}
+
+            {isListening && (
+              <div className="mt-4">
+                <MicWaveform isActive={isListening} />
               </div>
             )}
           </CardContent>

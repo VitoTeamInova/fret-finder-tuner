@@ -108,7 +108,7 @@ export const GuitarString = ({
         {[3, 5, 7, 9, 12, 15, 17, 19].map((fret) => (
           <div
             key={fret}
-            className="absolute w-px h-6 bg-guitar-fret/40"
+            className="hidden"
             style={{ left: `${(fret / 24) * 100}%` }}
           />
         ))}
