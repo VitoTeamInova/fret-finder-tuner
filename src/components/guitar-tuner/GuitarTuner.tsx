@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff } from 'lucide-react';
-import { TuningSelector } from './TuningSelector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Mic, MicOff, HelpCircle, ArrowUpDown } from 'lucide-react';
 import { GuitarString } from './GuitarString';
 import { useAudioPermission } from './hooks/useAudioPermission';
 import { usePitchDetection } from './hooks/usePitchDetection';
+import { useAudioPlayback } from './hooks/useAudioPlayback';
 import { TUNINGS, Tuning } from './types';
 import { cn } from '@/lib/utils';
 
@@ -13,9 +15,11 @@ export const GuitarTuner = () => {
   const [selectedTuning, setSelectedTuning] = useState<Tuning>(TUNINGS[0]);
   const [selectedString, setSelectedString] = useState<number>(0);
   const [isListening, setIsListening] = useState(false);
+  const [isReversed, setIsReversed] = useState(false);
   
   const { hasPermission, isRequesting, requestPermission } = useAudioPermission();
   const currentPitch = usePitchDetection(isListening && hasPermission === true);
+  const { playTone } = useAudioPlayback();
 
   const handleStartListening = async () => {
     if (hasPermission === null || hasPermission === false) {
@@ -35,121 +39,182 @@ export const GuitarTuner = () => {
     return currentPitch.note === targetNote ? currentPitch : null;
   };
 
+  const handleStringSelect = (index: number) => {
+    setSelectedString(index);
+    const frequency = selectedTuning.frequencies[index];
+    playTone(frequency, 1000); // Play tone for 1 second
+  };
+
+  const displayedNotes = isReversed ? [...selectedTuning.notes].reverse() : selectedTuning.notes;
+  const displayedFreqs = isReversed ? [...selectedTuning.frequencies].reverse() : selectedTuning.frequencies;
+
   return (
-    <div className="min-h-screen bg-wood-gradient p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-2">
-            Guitar Tuner
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Professional guitar tuning with multiple tuning options
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Fretboard Section */}
-          <div className="xl:col-span-3">
-            <Card className="bg-guitar-fretboard border-border shadow-2xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl text-foreground flex items-center justify-center gap-4">
-                  {selectedTuning.name} Tuning
-                  <Button
-                    variant={isListening ? "destructive" : "default"}
-                    size="sm"
-                    onClick={handleStartListening}
-                    disabled={isRequesting}
-                    className={cn(
-                      "transition-bounce",
-                      isListening && "animate-pulse"
-                    )}
-                  >
-                    {isListening ? (
-                      <>
-                        <MicOff className="w-4 h-4 mr-2" />
-                        Stop
-                      </>
-                    ) : (
-                      <>
-                        <Mic className="w-4 h-4 mr-2" />
-                        {hasPermission === null ? "Start Tuning" : "Listen"}
-                      </>
-                    )}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="p-8">
-                <div className="space-y-4">
-                  {selectedTuning.notes.map((note, index) => (
-                    <GuitarString
-                      key={`${selectedTuning.name}-${index}`}
-                      note={note}
-                      targetFrequency={selectedTuning.frequencies[index]}
-                      stringIndex={index}
-                      isSelected={selectedString === index}
-                      onSelect={() => setSelectedString(index)}
-                      tuningStatus={selectedString === index ? getMatchingStringForPitch() : null}
-                    />
-                  ))}
-                </div>
-                
-                {isListening && currentPitch && (
-                  <div className="mt-8 p-4 bg-card/50 rounded-lg text-center">
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Detected: <span className="font-mono text-foreground">{currentPitch.frequency.toFixed(1)} Hz</span>
-                    </div>
-                    <div className="text-2xl font-bold text-primary">
-                      {currentPitch.note}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Tuning Selector */}
-          <div className="xl:col-span-1">
-            <TuningSelector
-              selectedTuning={selectedTuning}
-              onTuningChange={(tuning) => {
-                setSelectedTuning(tuning);
-                setSelectedString(0);
-              }}
-            />
+    <div className="min-h-screen bg-wood-gradient">
+      {/* Header */}
+      <div className="bg-card/95 border-b border-border backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                TeamInova Guitar Tuner
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Professional guitar tuning with multiple tuning options
+              </p>
+            </div>
             
-            {/* Instructions */}
-            <Card className="mt-6 bg-card/80 border-border">
-              <CardHeader>
-                <CardTitle className="text-lg text-foreground">How to Use</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-2">
-                <p>1. Select your desired tuning</p>
-                <p>2. Click "Start Tuning" to enable microphone</p>
-                <p>3. Click on a string note to tune that string</p>
-                <p>4. Play the string and watch the feedback:</p>
-                <div className="ml-4 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-success">✓</span>
-                    <span>In tune</span>
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Tuning Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Tuning:</span>
+                <Select
+                  value={selectedTuning.name}
+                  onValueChange={(value) => {
+                    const tuning = TUNINGS.find(t => t.name === value);
+                    if (tuning) {
+                      setSelectedTuning(tuning);
+                      setSelectedString(0);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TUNINGS.map((tuning) => (
+                      <SelectItem key={tuning.name} value={tuning.name}>
+                        {tuning.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* String Order Toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsReversed(!isReversed)}
+                className="flex items-center gap-2"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+                {isReversed ? "High→Low" : "Low→High"}
+              </Button>
+
+              {/* Instructions Dialog */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <HelpCircle className="w-4 h-4 mr-2" />
+                    Help
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>How to Use TeamInova Guitar Tuner</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 text-sm">
+                    <div>
+                      <h4 className="font-semibold text-foreground">Getting Started</h4>
+                      <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
+                        <li>Select your desired tuning from the dropdown</li>
+                        <li>Click "Start Tuning" to enable microphone access</li>
+                        <li>Click on a string note to hear its target pitch</li>
+                        <li>Play the string on your guitar and watch the feedback</li>
+                      </ol>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-foreground">Tuning Feedback</h4>
+                      <div className="space-y-2 ml-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-success text-lg">✓</span>
+                          <span className="text-muted-foreground">Perfect tune</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-guitar-string-sharp text-lg">♯</span>
+                          <span className="text-muted-foreground">Too high (sharp) - tune down</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-guitar-string-flat text-lg">♭</span>
+                          <span className="text-muted-foreground">Too low (flat) - tune up</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-guitar-string-active text-sm font-mono">±10¢</span>
+                          <span className="text-muted-foreground">Fine tuning (cents off)</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-guitar-string-sharp">♯</span>
-                    <span>Too high (sharp)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-guitar-string-flat">♭</span>
-                    <span>Too low (flat)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-guitar-string-active">±10¢</span>
-                    <span>Fine tuning</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </DialogContent>
+              </Dialog>
+
+              {/* Microphone Button */}
+              <Button
+                variant={isListening ? "destructive" : "default"}
+                onClick={handleStartListening}
+                disabled={isRequesting}
+                className={cn(
+                  "transition-bounce",
+                  isListening && "animate-pulse"
+                )}
+              >
+                {isListening ? (
+                  <>
+                    <MicOff className="w-4 h-4 mr-2" />
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4 mr-2" />
+                    Start Tuning
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-4">
+        <Card className="bg-guitar-fretboard border-border shadow-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl text-foreground">
+              {selectedTuning.name} Tuning - {isReversed ? "High to Low" : "Low to High"}
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="p-8">
+            <div className="space-y-4">
+              {displayedNotes.map((note, displayIndex) => {
+                const actualIndex = isReversed ? selectedTuning.notes.length - 1 - displayIndex : displayIndex;
+                return (
+                  <GuitarString
+                    key={`${selectedTuning.name}-${actualIndex}-${isReversed}`}
+                    note={note}
+                    targetFrequency={displayedFreqs[displayIndex]}
+                    stringIndex={actualIndex}
+                    isSelected={selectedString === actualIndex}
+                    onSelect={() => handleStringSelect(actualIndex)}
+                    tuningStatus={selectedString === actualIndex ? getMatchingStringForPitch() : null}
+                  />
+                );
+              })}
+            </div>
+            
+            {isListening && currentPitch && (
+              <div className="mt-8 p-4 bg-card/50 rounded-lg text-center">
+                <div className="text-sm text-muted-foreground mb-2">
+                  Detected: <span className="font-mono text-foreground">{currentPitch.frequency.toFixed(1)} Hz</span>
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {currentPitch.note}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
