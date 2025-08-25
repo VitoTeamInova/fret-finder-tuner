@@ -89,8 +89,8 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
       <div className="absolute bottom-0 w-0.5 h-2 bg-success"></div>
       
       {/* Labels */}
-      <div className="absolute bottom-0 left-0 text-xs text-muted-foreground">♭</div>
-      <div className="absolute bottom-0 right-0 text-xs text-muted-foreground">♯</div>
+      <div className="absolute bottom-0 left-0 text-xs text-muted-foreground">♯</div>
+      <div className="absolute bottom-0 right-0 text-xs text-muted-foreground">♭</div>
       
       {/* Cents display */}
       {isActive && (

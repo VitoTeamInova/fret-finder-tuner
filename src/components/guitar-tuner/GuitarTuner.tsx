@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,7 +21,25 @@ export const GuitarTuner = () => {
   
   const { hasPermission, isRequesting, requestPermission } = useAudioPermission();
   const currentPitch = usePitchDetection(isListening && hasPermission === true);
-  const { playTone } = useAudioPlayback();
+  const { playTone, playSuccess } = useAudioPlayback();
+
+  const inTuneRef = useRef(false);
+  const lastBeepNoteRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isListening || !currentPitch) return;
+    const abs = Math.abs(currentPitch.cents);
+    const noteKey = `${currentPitch.note}`;
+    if (abs <= 5) {
+      if (!inTuneRef.current || lastBeepNoteRef.current !== noteKey) {
+        playSuccess();
+        inTuneRef.current = true;
+        lastBeepNoteRef.current = noteKey;
+      }
+    } else {
+      inTuneRef.current = false;
+    }
+  }, [isListening, currentPitch, playSuccess]);
 
   const handleStartListening = async () => {
     if (hasPermission === null || hasPermission === false) {
@@ -195,7 +213,7 @@ export const GuitarTuner = () => {
               {/* Tuning Gauge */}
               <div className="flex-shrink-0">
                 <TuningGauge 
-                  cents={currentPitch && selectedString !== null ? getMatchingStringForPitch()?.cents || 0 : 0}
+                  cents={currentPitch ? currentPitch.cents : 0}
                   isActive={isListening && currentPitch !== null}
                 />
               </div>
@@ -250,43 +268,39 @@ export const GuitarTuner = () => {
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Target: {selectedTuning.notes[selectedString]}</div>
+                    <div className="text-sm text-muted-foreground mb-1">Cents offset</div>
                     <div className="text-lg font-mono">
-                      {getMatchingStringForPitch() && (
-                        <span className={
-                          Math.abs(getMatchingStringForPitch()!.cents) <= 5 
-                            ? "text-success" 
-                            : Math.abs(getMatchingStringForPitch()!.cents) <= 15 
-                              ? "text-warning" 
-                              : "text-destructive"
-                        }>
-                          {getMatchingStringForPitch()!.cents > 0 ? '+' : ''}{getMatchingStringForPitch()!.cents}¢
-                        </span>
-                      )}
+                      <span className={
+                        Math.abs(currentPitch.cents) <= 5
+                          ? "text-success"
+                          : Math.abs(currentPitch.cents) <= 15
+                            ? "text-warning"
+                            : "text-destructive"
+                      }>
+                        {currentPitch.cents > 0 ? '+' : ''}{currentPitch.cents}¢
+                      </span>
                     </div>
                   </div>
                 </div>
-                
-                {getMatchingStringForPitch()?.isMatch && (
-                  <div className="mt-3 text-center">
-                    {Math.abs(getMatchingStringForPitch()!.cents) <= 5 ? (
-                      <div className="flex items-center justify-center gap-2 text-success">
-                        <span className="text-lg">✓</span>
-                        <span className="font-semibold">Perfect tune!</span>
-                      </div>
-                    ) : getMatchingStringForPitch()!.cents > 0 ? (
-                      <div className="flex items-center justify-center gap-2 text-guitar-string-sharp">
-                        <span className="text-lg">♯</span>
-                        <span>Too high (sharp) - tune down</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2 text-guitar-string-flat">
-                        <span className="text-lg">♭</span>
-                        <span>Too low (flat) - tune up</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+
+                <div className="mt-3 text-center">
+                  {Math.abs(currentPitch.cents) <= 5 ? (
+                    <div className="flex items-center justify-center gap-2 text-success">
+                      <span className="text-lg">✓</span>
+                      <span className="font-semibold">Perfect tune!</span>
+                    </div>
+                  ) : currentPitch.cents > 0 ? (
+                    <div className="flex items-center justify-center gap-2 text-guitar-string-sharp">
+                      <span className="text-lg">♯</span>
+                      <span>Too high (sharp) - tune down</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-guitar-string-flat">
+                      <span className="text-lg">♭</span>
+                      <span>Too low (flat) - tune up</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
