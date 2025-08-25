@@ -94,9 +94,9 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
       
       {/* Cents display */}
       {isActive && (
-        <div className="absolute -bottom-6 text-xs font-mono text-center">
+        <div className="absolute -bottom-5 text-xs font-mono text-center w-full">
           <span className={getColor()}>
-            {cents > 0 ? '+' : ''}{cents.toFixed(0)}¢
+            {cents > 0 ? '+' : ''}{Math.round(cents)}¢
           </span>
         </div>
       )}

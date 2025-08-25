@@ -261,23 +261,23 @@ export const GuitarTuner = () => {
             </div>
             
             {isListening && (
-              <div className="mt-8 p-4 bg-card/50 rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div className="mt-6 p-3 bg-card/50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center">
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Detected Note</div>
-                    <div className="text-2xl font-bold text-primary">
+                    <div className="text-xs text-muted-foreground mb-1">Detected Note</div>
+                    <div className="text-xl font-bold text-primary">
                       {displayPitch ? displayPitch.note : '—'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Frequency</div>
-                    <div className="text-lg font-mono text-foreground">
+                    <div className="text-xs text-muted-foreground mb-1">Frequency</div>
+                    <div className="text-sm font-mono text-foreground">
                       {displayPitch ? `${displayPitch.frequency.toFixed(1)} Hz` : '—'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Cents offset</div>
-                    <div className="text-lg font-mono">
+                    <div className="text-xs text-muted-foreground mb-1">Cents offset</div>
+                    <div className="text-sm font-mono">
                       {displayPitch ? (
                         <span className={
                           Math.abs(displayPitch.cents) <= 5
@@ -293,22 +293,22 @@ export const GuitarTuner = () => {
                   </div>
                 </div>
 
-                <div className="mt-3 text-center">
+                <div className="mt-2 text-center text-sm">
                   {!displayPitch ? (
                     <span className="text-muted-foreground">Listening…</span>
                   ) : Math.abs(displayPitch.cents) <= 5 ? (
                     <div className="flex items-center justify-center gap-2 text-success">
-                      <span className="text-lg">✓</span>
+                      <span>✓</span>
                       <span className="font-semibold">Perfect tune!</span>
                     </div>
                   ) : displayPitch.cents > 0 ? (
                     <div className="flex items-center justify-center gap-2 text-guitar-string-sharp">
-                      <span className="text-lg">♯</span>
+                      <span>♯</span>
                       <span>Too high (sharp) - tune down</span>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center gap-2 text-guitar-string-flat">
-                      <span className="text-lg">♭</span>
+                      <span>♭</span>
                       <span>Too low (flat) - tune up</span>
                     </div>
                   )}

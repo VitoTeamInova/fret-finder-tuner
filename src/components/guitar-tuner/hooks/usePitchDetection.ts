@@ -128,8 +128,8 @@ export const usePitchDetection = (isActive: boolean) => {
       const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
       source.connect(analyserRef.current);
       
-      analyserRef.current.fftSize = 4096;
-      analyserRef.current.smoothingTimeConstant = 0.1;
+      analyserRef.current.fftSize = 8192; // Increased for better accuracy
+      analyserRef.current.smoothingTimeConstant = 0.05; // Less smoothing for faster response
       
       detectPitch();
     } catch (error) {
