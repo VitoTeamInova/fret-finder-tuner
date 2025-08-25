@@ -64,19 +64,20 @@ export const GuitarTuner = () => {
   const getDetectedStringInfo = () => {
     if (!currentPitch) return { detectedStringIndex: -1, matchingString: null };
     
-    // Find which string note matches the detected note with frequency tolerance
+    // Find the closest string by frequency (works for all tunings)
     let detectedStringIndex = -1;
     let bestMatch = { cents: Infinity, index: -1 };
     
     // Check each string to find the best match by frequency proximity
     selectedTuning.frequencies.forEach((targetFreq, index) => {
       const cents = Math.round(1200 * Math.log2(currentPitch.frequency / targetFreq));
-      if (Math.abs(cents) < Math.abs(bestMatch.cents) && Math.abs(cents) <= 100) { // Within 100 cents
+      if (Math.abs(cents) < Math.abs(bestMatch.cents) && Math.abs(cents) <= 50) { // Within 50 cents for better accuracy
         bestMatch = { cents, index };
       }
     });
     
-    if (bestMatch.index !== -1 && selectedTuning.notes[bestMatch.index] === currentPitch.note) {
+    // Use frequency-based detection only (works for all tunings)
+    if (bestMatch.index !== -1) {
       detectedStringIndex = bestMatch.index;
     }
     
