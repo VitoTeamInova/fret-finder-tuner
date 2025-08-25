@@ -17,7 +17,7 @@ export const GuitarTuner = () => {
   const [selectedTuning, setSelectedTuning] = useState<Tuning>(TUNINGS[0]);
   const [selectedString, setSelectedString] = useState<number>(0);
   const [isListening, setIsListening] = useState(false);
-  const [isReversed, setIsReversed] = useState(false);
+  const [isReversed, setIsReversed] = useState(true); // Default to High-to-Low
   const [displayPitch, setDisplayPitch] = useState<TuningStatus | null>(null);
   const [tunedStrings, setTunedStrings] = useState<Set<number>>(new Set());
   
@@ -64,8 +64,21 @@ export const GuitarTuner = () => {
   const getDetectedStringInfo = () => {
     if (!currentPitch) return { detectedStringIndex: -1, matchingString: null };
     
-    // Find which string note matches the detected note
-    const detectedStringIndex = selectedTuning.notes.findIndex(note => note === currentPitch.note);
+    // Find which string note matches the detected note with frequency tolerance
+    let detectedStringIndex = -1;
+    let bestMatch = { cents: Infinity, index: -1 };
+    
+    // Check each string to find the best match by frequency proximity
+    selectedTuning.frequencies.forEach((targetFreq, index) => {
+      const cents = Math.round(1200 * Math.log2(currentPitch.frequency / targetFreq));
+      if (Math.abs(cents) < Math.abs(bestMatch.cents) && Math.abs(cents) <= 100) { // Within 100 cents
+        bestMatch = { cents, index };
+      }
+    });
+    
+    if (bestMatch.index !== -1 && selectedTuning.notes[bestMatch.index] === currentPitch.note) {
+      detectedStringIndex = bestMatch.index;
+    }
     
     if (detectedStringIndex === -1) return { detectedStringIndex: -1, matchingString: null };
     
@@ -84,14 +97,30 @@ export const GuitarTuner = () => {
     return { detectedStringIndex, matchingString };
   };
 
-  // Track tuned strings
+  // Track tuned strings and auto-stop when all tuned
   useEffect(() => {
     const { detectedStringIndex, matchingString } = getDetectedStringInfo();
     
     if (detectedStringIndex !== -1 && matchingString?.isInTune) {
-      setTunedStrings(prev => new Set(prev).add(detectedStringIndex));
+      setTunedStrings(prev => {
+        const newSet = new Set(prev).add(detectedStringIndex);
+        
+        // Check if all strings are tuned and auto-stop
+        if (newSet.size === selectedTuning.notes.length && isListening) {
+          setTimeout(() => {
+            setIsListening(false);
+          }, 1000); // Give a moment to show the completion
+        }
+        
+        return newSet;
+      });
     }
-  }, [currentPitch]);
+  }, [currentPitch, selectedTuning.notes.length, isListening]);
+
+  // Reset tuned strings when changing tuning
+  useEffect(() => {
+    setTunedStrings(new Set());
+  }, [selectedTuning]);
 
   const getMatchingStringForPitch = () => {
     if (!currentPitch) return null;
@@ -262,6 +291,11 @@ export const GuitarTuner = () => {
               {/* Tuning Title */}
               <CardTitle className="text-xl text-foreground text-center flex-1">
                 {selectedTuning.name} Tuning - {isReversed ? "High to Low" : "Low to High"}
+                {tunedStrings.size === selectedTuning.notes.length && tunedStrings.size > 0 && (
+                  <div className="text-success text-lg font-bold mt-2 animate-pulse">
+                    🎸 Guitar Tuned! 🎸
+                  </div>
+                )}
               </CardTitle>
               
               {/* Waveform */}
