@@ -11,6 +11,7 @@ import { useAudioPlayback } from './hooks/useAudioPlayback';
 import { TUNINGS, Tuning } from './types';
 import { cn } from '@/lib/utils';
 import { MicWaveform } from './MicWaveform';
+import { TuningGauge } from './TuningGauge';
 
 export const GuitarTuner = () => {
   const [selectedTuning, setSelectedTuning] = useState<Tuning>(TUNINGS[0]);
@@ -55,21 +56,13 @@ export const GuitarTuner = () => {
       <div className="bg-card/95 border-b border-border backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                  TeamInova Guitar Tuner
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  Professional guitar tuning with multiple tuning options
-                </p>
-              </div>
-              
-              {isListening && (
-                <div className="w-48 h-16">
-                  <MicWaveform isActive={isListening} height={64} />
-                </div>
-              )}
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                TeamInova Guitar Tuner
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Professional guitar tuning with multiple tuning options
+              </p>
             </div>
             
             <div className="flex items-center gap-4 flex-wrap">
@@ -188,10 +181,30 @@ export const GuitarTuner = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4">
         <Card className="bg-guitar-fretboard border-border shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl text-foreground">
-              {selectedTuning.name} Tuning - {isReversed ? "High to Low" : "Low to High"}
-            </CardTitle>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-4">
+              {/* Tuning Gauge */}
+              <div className="flex-shrink-0">
+                <TuningGauge 
+                  cents={selectedString !== null && currentPitch ? currentPitch.cents : 0}
+                  isActive={isListening && currentPitch !== null && selectedString !== null}
+                />
+              </div>
+              
+              {/* Tuning Title */}
+              <CardTitle className="text-xl text-foreground text-center flex-1">
+                {selectedTuning.name} Tuning - {isReversed ? "High to Low" : "Low to High"}
+              </CardTitle>
+              
+              {/* Waveform */}
+              <div className="flex-shrink-0">
+                {isListening && (
+                  <div className="w-32 h-12">
+                    <MicWaveform isActive={isListening} height={48} />
+                  </div>
+                )}
+              </div>
+            </div>
           </CardHeader>
           
           <CardContent className="p-8">
