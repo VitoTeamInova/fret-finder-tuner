@@ -26,54 +26,49 @@ export const usePitchDetection = (isActive: boolean) => {
   }, []);
 
   const autoCorrelate = useCallback((buffer: Float32Array, sampleRate: number): number => {
+    // Based on Chris Wilson's autocorrelation pitch detection
     const SIZE = buffer.length;
-    const rms = Math.sqrt(buffer.reduce((sum, val) => sum + val * val, 0) / SIZE);
-    
-    if (rms < 0.01) return -1; // Not enough signal
-    
-    let r1 = 0;
-    let r2 = SIZE - 1;
-    const threshold = 0.2;
-    
-    // Find the first point where amplitude crosses threshold
-    for (let i = 0; i < SIZE / 2; i++) {
-      if (Math.abs(buffer[i]) < threshold) {
-        r1 = i;
-        break;
-      }
+    let rms = 0;
+    for (let i = 0; i < SIZE; i++) {
+      const val = buffer[i];
+      rms += val * val;
     }
-    
-    // Find the last point where amplitude crosses threshold
-    for (let i = 1; i < SIZE / 2; i++) {
-      if (Math.abs(buffer[SIZE - i]) < threshold) {
-        r2 = SIZE - i;
-        break;
-      }
-    }
-    
-    const correlations = new Array(r2 - r1);
-    
-    for (let i = 0; i < correlations.length; i++) {
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.01) return -1; // too little signal
+
+    // Remove DC offset
+    let mean = 0;
+    for (let i = 0; i < SIZE; i++) mean += buffer[i];
+    mean /= SIZE;
+    for (let i = 0; i < SIZE; i++) buffer[i] -= mean;
+
+    let bestOffset = -1;
+    let bestCorrelation = 0;
+    let foundGoodCorrelation = false;
+    const MIN_SAMPLES = 2;      // corresponds to ~22kHz upper bound
+    const MAX_SAMPLES = Math.floor(SIZE / 2);
+    const correlations = new Array(MAX_SAMPLES).fill(0);
+
+    for (let offset = MIN_SAMPLES; offset < MAX_SAMPLES; offset++) {
       let correlation = 0;
-      
-      for (let j = 0; j < correlations.length; j++) {
-        correlation += Math.abs(buffer[j] - buffer[j + i]);
+      for (let i = 0; i < MAX_SAMPLES; i++) {
+        correlation += buffer[i] * buffer[i + offset];
       }
-      
-      correlations[i] = correlation;
-    }
-    
-    let minCorrelation = 1;
-    let minIndex = -1;
-    
-    for (let i = 0; i < correlations.length; i++) {
-      if (correlations[i] < minCorrelation) {
-        minCorrelation = correlations[i];
-        minIndex = i;
+      correlations[offset] = correlation;
+      if (correlation > 0.9 && correlation > bestCorrelation) {
+        foundGoodCorrelation = true;
+        bestCorrelation = correlation;
+        bestOffset = offset;
       }
     }
-    
-    return minIndex > 0 ? sampleRate / (r1 + minIndex) : -1;
+
+    if (!foundGoodCorrelation) return -1;
+
+    // Interpolation for better accuracy
+    const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / (2 * (2 * correlations[bestOffset] - correlations[bestOffset + 1] - correlations[bestOffset - 1]));
+    const period = bestOffset + shift;
+
+    return sampleRate / period;
   }, []);
 
   const detectPitch = useCallback(() => {
@@ -86,7 +81,7 @@ export const usePitchDetection = (isActive: boolean) => {
     
     const frequency = autoCorrelate(buffer, audioContextRef.current.sampleRate);
     
-    if (frequency > 60 && frequency < 1000) { // Guitar frequency range
+    if (frequency > 50 && frequency < 1500) { // Valid instrument range
       const note = noteFromFrequency(frequency);
       
       // Find the closest target frequency for this note
@@ -134,7 +129,7 @@ export const usePitchDetection = (isActive: boolean) => {
       source.connect(analyserRef.current);
       
       analyserRef.current.fftSize = 4096;
-      analyserRef.current.smoothingTimeConstant = 0.3;
+      analyserRef.current.smoothingTimeConstant = 0.1;
       
       detectPitch();
     } catch (error) {

@@ -11,7 +11,7 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
   const clampedCents = Math.max(-50, Math.min(50, cents));
   
   // Convert cents to angle (0 degrees = center, -90 to +90 range)
-  const angle = (clampedCents / 50) * 90;
+  const angle = -(clampedCents / 50) * 90;
   
   // Determine color based on how close to center
   const getColor = () => {
