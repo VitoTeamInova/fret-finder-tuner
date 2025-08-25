@@ -10,6 +10,8 @@ interface GuitarStringProps {
   isSelected: boolean;
   onSelect: () => void;
   tuningStatus?: TuningStatus | null;
+  isDetected?: boolean; // When this note is currently being played
+  isTuned?: boolean; // When this note is tuned and should stay lit
 }
 
 export const GuitarString = ({ 
@@ -17,11 +19,18 @@ export const GuitarString = ({
   stringIndex, 
   isSelected, 
   onSelect, 
-  tuningStatus 
+  tuningStatus,
+  isDetected = false,
+  isTuned = false
 }: GuitarStringProps) => {
   const [isHovered, setIsHovered] = useState(false);
   
   const getStringStatus = () => {
+    if (isTuned) return 'tuned';
+    if (isDetected && tuningStatus?.isInTune) return 'tuned';
+    if (isDetected && tuningStatus?.isSharp) return 'sharp';
+    if (isDetected && tuningStatus?.isFlat) return 'flat';
+    if (isDetected) return 'detecting';
     if (!tuningStatus || !isSelected) return 'default';
     if (tuningStatus.isInTune) return 'tuned';
     if (tuningStatus.isSharp) return 'sharp';
@@ -36,7 +45,7 @@ export const GuitarString = ({
       case 'sharp': return 'border-guitar-string-sharp bg-guitar-string-sharp/20';
       case 'flat': return 'border-guitar-string-flat bg-guitar-string-flat/20';
       case 'detecting': return 'border-guitar-string-active bg-guitar-string-active/20';
-      default: return isSelected ? 'border-guitar-string-active bg-guitar-string-active/10' : 'border-guitar-string';
+      default: return (isSelected || isDetected) ? 'border-guitar-string-active bg-guitar-string-active/10' : 'border-guitar-string';
     }
   };
 

@@ -19,6 +19,7 @@ export const GuitarTuner = () => {
   const [isListening, setIsListening] = useState(false);
   const [isReversed, setIsReversed] = useState(false);
   const [displayPitch, setDisplayPitch] = useState<TuningStatus | null>(null);
+  const [tunedStrings, setTunedStrings] = useState<Set<number>>(new Set());
   
   const { hasPermission, isRequesting, requestPermission } = useAudioPermission();
   const currentPitch = usePitchDetection(isListening && hasPermission === true);
@@ -59,6 +60,38 @@ export const GuitarTuner = () => {
       setIsListening(!isListening);
     }
   };
+
+  const getDetectedStringInfo = () => {
+    if (!currentPitch) return { detectedStringIndex: -1, matchingString: null };
+    
+    // Find which string note matches the detected note
+    const detectedStringIndex = selectedTuning.notes.findIndex(note => note === currentPitch.note);
+    
+    if (detectedStringIndex === -1) return { detectedStringIndex: -1, matchingString: null };
+    
+    const targetFrequency = selectedTuning.frequencies[detectedStringIndex];
+    const cents = Math.round(1200 * Math.log2(currentPitch.frequency / targetFrequency));
+    
+    const matchingString = {
+      ...currentPitch,
+      cents,
+      isMatch: true,
+      isInTune: Math.abs(cents) <= 10,
+      isSharp: cents > 10,
+      isFlat: cents < -10
+    };
+    
+    return { detectedStringIndex, matchingString };
+  };
+
+  // Track tuned strings
+  useEffect(() => {
+    const { detectedStringIndex, matchingString } = getDetectedStringInfo();
+    
+    if (detectedStringIndex !== -1 && matchingString?.isInTune) {
+      setTunedStrings(prev => new Set(prev).add(detectedStringIndex));
+    }
+  }, [currentPitch]);
 
   const getMatchingStringForPitch = () => {
     if (!currentPitch) return null;
@@ -246,6 +279,10 @@ export const GuitarTuner = () => {
             <div className="space-y-4">
               {displayedNotes.map((note, displayIndex) => {
                 const actualIndex = isReversed ? selectedTuning.notes.length - 1 - displayIndex : displayIndex;
+                const { detectedStringIndex, matchingString } = getDetectedStringInfo();
+                const isDetected = detectedStringIndex === actualIndex;
+                const isTuned = tunedStrings.has(actualIndex);
+                
                 return (
                   <GuitarString
                     key={`${selectedTuning.name}-${actualIndex}-${isReversed}`}
@@ -254,7 +291,9 @@ export const GuitarTuner = () => {
                     stringIndex={actualIndex}
                     isSelected={selectedString === actualIndex}
                     onSelect={() => handleStringSelect(actualIndex)}
-                    tuningStatus={selectedString === actualIndex ? getMatchingStringForPitch() : null}
+                    tuningStatus={isDetected ? matchingString : (selectedString === actualIndex ? getMatchingStringForPitch() : null)}
+                    isDetected={isDetected}
+                    isTuned={isTuned}
                   />
                 );
               })}
