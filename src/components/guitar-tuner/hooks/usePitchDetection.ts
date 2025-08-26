@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TuningStatus } from '../types';
 
-export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10) => {
+export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10, micSensitivity: number = 0.01) => {
   const [currentPitch, setCurrentPitch] = useState<TuningStatus | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -34,7 +34,7 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
       rms += val * val;
     }
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.01) return -1; // too little signal
+    if (rms < micSensitivity) return -1; // sensitivity threshold
 
     // Remove DC offset
     let mean = 0;
@@ -81,7 +81,7 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
     
     const frequency = autoCorrelate(buffer, audioContextRef.current.sampleRate);
     
-    if (frequency > 50 && frequency < 1500) { // Valid instrument range
+    if (frequency > 40 && frequency < 2000) { // Extended range for high E and B strings
       const note = noteFromFrequency(frequency);
       
       // Find the closest target frequency for this note
@@ -128,8 +128,8 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
       const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
       source.connect(analyserRef.current);
       
-      analyserRef.current.fftSize = 8192; // Increased for better accuracy
-      analyserRef.current.smoothingTimeConstant = 0.05; // Less smoothing for faster response
+      analyserRef.current.fftSize = 16384; // Larger FFT for better high frequency resolution
+      analyserRef.current.smoothingTimeConstant = 0.02; // Even less smoothing for high frequencies
       
       detectPitch();
     } catch (error) {

@@ -91,7 +91,8 @@ export const GuitarString = ({
           "w-12 h-12 rounded-full mr-3 flex-shrink-0 text-sm font-bold transition-bounce z-10",
           getStatusColor(),
           isSelected && "scale-110 shadow-lg",
-          isHovered && "scale-105"
+          isHovered && "scale-105",
+          isDetected && "animate-pulse-detected"
         )}
         onClick={onSelect}
         onMouseEnter={() => setIsHovered(true)}

@@ -23,9 +23,9 @@ export const GuitarTuner = () => {
   const [displayPitch, setDisplayPitch] = useState<TuningStatus | null>(null);
   const [tunedStrings, setTunedStrings] = useState<Set<number>>(new Set());
   
-  const { settings, setDefaultTuningName, setTheme, setPrecisionCents } = useUserSettings();
+  const { settings, setDefaultTuningName, setTheme, setPrecisionCents, setMicSensitivity } = useUserSettings();
   const { hasPermission, isRequesting, requestPermission } = useAudioPermission();
-  const currentPitch = usePitchDetection(isListening && hasPermission === true, settings.precisionCents);
+  const currentPitch = usePitchDetection(isListening && hasPermission === true, settings.precisionCents, settings.micSensitivity);
   const { playTone, playSuccess } = useAudioPlayback();
   const inTuneRef = useRef(false);
   const lastBeepNoteRef = useRef<string | null>(null);
@@ -293,6 +293,8 @@ export const GuitarTuner = () => {
                 onThemeChange={setTheme}
                 precisionCents={settings.precisionCents}
                 onPrecisionChange={setPrecisionCents}
+                micSensitivity={settings.micSensitivity}
+                onMicSensitivityChange={setMicSensitivity}
               />
 
               {/* Microphone Button */}

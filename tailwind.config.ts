@@ -106,12 +106,18 @@ export default {
 					'0%': { transform: 'translateY(-0.6px)' },
 					'50%': { transform: 'translateY(0.6px)' },
 					'100%': { transform: 'translateY(-0.6px)' }
+				},
+				'pulse-detected': {
+					'0%': { transform: 'scale(1)', opacity: '1' },
+					'50%': { transform: 'scale(1.05)', opacity: '0.8' },
+					'100%': { transform: 'scale(1)', opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'string-vibrate': 'string-vibrate 0.07s linear infinite'
+				'string-vibrate': 'string-vibrate 0.08s linear infinite',
+				'pulse-detected': 'pulse-detected 0.5s ease-in-out infinite'
 			}
 		}
 	},
