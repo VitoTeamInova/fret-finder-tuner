@@ -29,7 +29,7 @@ export const useAudioPlayback = () => {
 
       const tryPlay = async () => {
         for (const f of candidates) {
-          const p = `/audio/strings/${f}`;
+          const p = `audio/strings/${f}`;
           try {
             const a = new Audio(p);
             a.volume = 0.7;
