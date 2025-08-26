@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { TuningStatus } from '../types';
 
-export const usePitchDetection = (isActive: boolean) => {
+export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10) => {
   const [currentPitch, setCurrentPitch] = useState<TuningStatus | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -90,9 +90,9 @@ export const usePitchDetection = (isActive: boolean) => {
       const targetFrequency = A4 * Math.pow(2, (noteNumber - 69) / 12);
       
       const cents = getCentsFromFrequency(frequency, targetFrequency);
-      const isInTune = Math.abs(cents) <= 10;
-      const isSharp = cents > 10;
-      const isFlat = cents < -10;
+      const isInTune = Math.abs(cents) <= toleranceCents;
+      const isSharp = cents > toleranceCents;
+      const isFlat = cents < -toleranceCents;
       
       setCurrentPitch({
         note,

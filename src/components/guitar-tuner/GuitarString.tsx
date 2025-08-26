@@ -109,7 +109,7 @@ export const GuitarString = ({
             getStringStatus() === 'tuned' && "shadow-guitar-string-tuned/50",
             getStringStatus() === 'sharp' && "shadow-guitar-string-sharp/50",
             getStringStatus() === 'flat' && "shadow-guitar-string-flat/50",
-            isDetected && "animate-pulse"
+            isDetected && "animate-string-vibrate"
           )}
           style={{ height: `${getStringWidth()}px` }}
         />

@@ -12,6 +12,8 @@ import { TUNINGS, Tuning, TuningStatus } from './types';
 import { cn } from '@/lib/utils';
 import { MicWaveform } from './MicWaveform';
 import { TuningGauge } from './TuningGauge';
+import { SettingsDialog } from './SettingsDialog';
+import { useUserSettings } from './hooks/useUserSettings';
 
 export const GuitarTuner = () => {
   const [selectedTuning, setSelectedTuning] = useState<Tuning>(TUNINGS[0]);
@@ -21,10 +23,10 @@ export const GuitarTuner = () => {
   const [displayPitch, setDisplayPitch] = useState<TuningStatus | null>(null);
   const [tunedStrings, setTunedStrings] = useState<Set<number>>(new Set());
   
+  const { settings, setDefaultTuningName, setTheme, setPrecisionCents } = useUserSettings();
   const { hasPermission, isRequesting, requestPermission } = useAudioPermission();
-  const currentPitch = usePitchDetection(isListening && hasPermission === true);
+  const currentPitch = usePitchDetection(isListening && hasPermission === true, settings.precisionCents);
   const { playTone, playSuccess } = useAudioPlayback();
-
   const inTuneRef = useRef(false);
   const lastBeepNoteRef = useRef<string | null>(null);
 
@@ -32,7 +34,7 @@ export const GuitarTuner = () => {
     if (!isListening || !currentPitch) return;
     const abs = Math.abs(currentPitch.cents);
     const noteKey = `${currentPitch.note}`;
-    if (abs <= 5) {
+    if (abs <= settings.precisionCents) {
       if (!inTuneRef.current || lastBeepNoteRef.current !== noteKey) {
         playSuccess();
         inTuneRef.current = true;
@@ -51,13 +53,26 @@ export const GuitarTuner = () => {
   }, [currentPitch]);
 
   const handleStartListening = async () => {
+    const resetSession = () => {
+      setTunedStrings(new Set());
+      setDisplayPitch(null);
+      inTuneRef.current = false;
+      lastBeepNoteRef.current = null;
+    };
+
     if (hasPermission === null || hasPermission === false) {
       const granted = await requestPermission();
       if (granted) {
+        resetSession();
         setIsListening(true);
       }
     } else {
-      setIsListening(!isListening);
+      if (!isListening) {
+        resetSession();
+        setIsListening(true);
+      } else {
+        setIsListening(false);
+      }
     }
   };
 
@@ -85,14 +100,15 @@ export const GuitarTuner = () => {
     
     const targetFrequency = selectedTuning.frequencies[detectedStringIndex];
     const cents = Math.round(1200 * Math.log2(currentPitch.frequency / targetFrequency));
+    const tol = settings.precisionCents;
     
     const matchingString = {
       ...currentPitch,
       cents,
       isMatch: true,
-      isInTune: Math.abs(cents) <= 10,
-      isSharp: cents > 10,
-      isFlat: cents < -10
+      isInTune: Math.abs(cents) <= tol,
+      isSharp: cents > tol,
+      isFlat: cents < -tol
     };
     
     return { detectedStringIndex, matchingString };
@@ -122,6 +138,16 @@ export const GuitarTuner = () => {
   useEffect(() => {
     setTunedStrings(new Set());
   }, [selectedTuning]);
+
+  // Apply default tuning from settings on load or when changed
+  useEffect(() => {
+    const t = TUNINGS.find(t => t.name === settings.defaultTuningName);
+    if (t && selectedTuning.name !== t.name) {
+      setSelectedTuning(t);
+      setSelectedString(0);
+      setTunedStrings(new Set());
+    }
+  }, [settings.defaultTuningName]);
 
   const getMatchingStringForPitch = () => {
     if (!currentPitch) return null;
@@ -249,7 +275,7 @@ export const GuitarTuner = () => {
                           <span className="text-muted-foreground">Too low (flat) - tune up</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-guitar-string-active text-sm font-mono">±10¢</span>
+                          <span className="text-guitar-string-active text-sm font-mono">±{settings.precisionCents}¢</span>
                           <span className="text-muted-foreground">Fine tuning (cents off)</span>
                         </div>
                       </div>
@@ -257,6 +283,17 @@ export const GuitarTuner = () => {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {/* Settings */}
+              <SettingsDialog
+                tunings={TUNINGS}
+                defaultTuningName={settings.defaultTuningName}
+                onDefaultTuningChange={(name) => setDefaultTuningName(name)}
+                theme={settings.theme}
+                onThemeChange={setTheme}
+                precisionCents={settings.precisionCents}
+                onPrecisionChange={setPrecisionCents}
+              />
 
               {/* Microphone Button */}
               <Button
@@ -363,7 +400,7 @@ export const GuitarTuner = () => {
                     <div className="text-sm font-mono">
                       {displayPitch ? (
                         <span className={
-                          Math.abs(displayPitch.cents) <= 5
+                          Math.abs(displayPitch.cents) <= settings.precisionCents
                             ? "text-success"
                             : Math.abs(displayPitch.cents) <= 15
                               ? "text-warning"
@@ -379,7 +416,7 @@ export const GuitarTuner = () => {
                 <div className="mt-2 text-center text-sm">
                   {!displayPitch ? (
                     <span className="text-muted-foreground">Listening…</span>
-                  ) : Math.abs(displayPitch.cents) <= 5 ? (
+                  ) : Math.abs(displayPitch.cents) <= settings.precisionCents ? (
                     <div className="flex items-center justify-center gap-2 text-success">
                       <span>✓</span>
                       <span className="font-semibold">Perfect tune!</span>
