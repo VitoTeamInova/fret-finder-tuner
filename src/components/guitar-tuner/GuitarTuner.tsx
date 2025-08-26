@@ -141,8 +141,15 @@ export const GuitarTuner = () => {
 
   const handleStringSelect = (index: number) => {
     setSelectedString(index);
-    const frequency = selectedTuning.frequencies[index];
-    playTone(frequency, 1000); // Play tone for 1 second
+    const note = selectedTuning.notes[index];
+    
+    // Extract note and octave from the note string (e.g., "E2" -> note="E", octave="2")
+    const noteMatch = note.match(/([A-G]♭?)(\d)/);
+    if (noteMatch) {
+      const noteName = noteMatch[1].replace('♭', 'b'); // Convert flat symbol to 'b'
+      const octave = noteMatch[2];
+      playTone(selectedTuning.name, noteName, octave);
+    }
   };
 
   const displayedNotes = isReversed ? [...selectedTuning.notes].reverse() : selectedTuning.notes;

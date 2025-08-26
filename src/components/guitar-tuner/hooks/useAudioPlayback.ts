@@ -1,8 +1,42 @@
 import { useCallback } from 'react';
 
 export const useAudioPlayback = () => {
-  const playTone = useCallback((frequency: number, duration: number = 1000) => {
+  const playTone = useCallback((tuningName: string, note: string, octave: string) => {
     try {
+      // Convert tuning name to filename format
+      const tuningSlug = tuningName.toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/♭/g, 'b');
+      
+      const fileName = `${tuningSlug}-${note.toLowerCase()}${octave}.mp3`;
+      const audioPath = `/audio/strings/${fileName}`;
+      
+      const audio = new Audio(audioPath);
+      audio.volume = 0.7;
+      
+      audio.play().catch(error => {
+        console.warn('Could not play audio file:', audioPath, error);
+        // Fallback to synthetic tone
+        playFallbackTone(note, octave);
+      });
+    } catch (error) {
+      console.warn('Audio playback not supported:', error);
+    }
+  }, []);
+
+  const playFallbackTone = useCallback((note: string, octave: string) => {
+    try {
+      // Convert note to frequency for fallback
+      const noteFreqs: { [key: string]: number } = {
+        'c': 261.63, 'd': 293.66, 'e': 329.63, 'f': 349.23,
+        'g': 391.95, 'a': 440.00, 'b': 493.88,
+        'db': 277.18, 'eb': 311.13, 'gb': 369.99, 'ab': 415.30, 'bb': 466.16
+      };
+      
+      const baseFreq = noteFreqs[note.toLowerCase()] || 440;
+      const octaveMultiplier = Math.pow(2, parseInt(octave) - 4);
+      const frequency = baseFreq * octaveMultiplier;
+
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -16,10 +50,10 @@ export const useAudioPlayback = () => {
       // Smooth attack and release to avoid clicking
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
       gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration / 1000);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1);
 
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + duration / 1000);
+      oscillator.stop(audioContext.currentTime + 1);
 
       // Clean up
       oscillator.addEventListener('ended', () => {
@@ -28,7 +62,7 @@ export const useAudioPlayback = () => {
         audioContext.close();
       });
     } catch (error) {
-      console.warn('Audio playback not supported:', error);
+      console.warn('Fallback audio not supported:', error);
     }
   }, []);
 
