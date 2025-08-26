@@ -82,13 +82,13 @@ export const GuitarString = ({
   };
 
   return (
-    <div className="relative flex items-center w-full mb-6">
+    <div className="relative flex items-center w-full mb-4">
       {/* Note circle */}
       <Button
         variant="outline"
         size="sm"
         className={cn(
-          "w-16 h-16 rounded-full mr-4 flex-shrink-0 text-lg font-bold transition-bounce z-10",
+          "w-12 h-12 rounded-full mr-3 flex-shrink-0 text-sm font-bold transition-bounce z-10",
           getStatusColor(),
           isSelected && "scale-110 shadow-lg",
           isHovered && "scale-105"
@@ -108,7 +108,8 @@ export const GuitarString = ({
             isSelected ? "shadow-md" : "",
             getStringStatus() === 'tuned' && "shadow-guitar-string-tuned/50",
             getStringStatus() === 'sharp' && "shadow-guitar-string-sharp/50",
-            getStringStatus() === 'flat' && "shadow-guitar-string-flat/50"
+            getStringStatus() === 'flat' && "shadow-guitar-string-flat/50",
+            isDetected && "animate-pulse"
           )}
           style={{ height: `${getStringWidth()}px` }}
         />
@@ -125,7 +126,7 @@ export const GuitarString = ({
       
       {/* Tuning feedback */}
       {isSelected && (
-        <div className="ml-4 w-20 flex justify-center items-center text-xl">
+        <div className="ml-3 w-16 flex justify-center items-center text-lg">
           {getFeedbackDisplay()}
         </div>
       )}

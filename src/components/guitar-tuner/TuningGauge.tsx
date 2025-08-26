@@ -23,30 +23,30 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
   };
 
   return (
-    <div className="relative w-24 h-12 flex items-end justify-center">
+    <div className="relative w-48 h-24 flex items-end justify-center">
       {/* Gauge background arc */}
       <svg
-        width="96"
-        height="48"
-        viewBox="0 0 96 48"
+        width="192"
+        height="96"
+        viewBox="0 0 192 96"
         className="absolute"
       >
         {/* Background arc */}
         <path
-          d="M 8 40 A 40 40 0 0 1 88 40"
+          d="M 16 80 A 80 80 0 0 1 176 80"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="3"
           className="text-border"
         />
         
         {/* Tick marks */}
         {[-40, -20, 0, 20, 40].map((tick, index) => {
           const tickAngle = (tick / 50) * 90 + 90; // Convert to SVG angle
-          const x1 = 48 + 35 * Math.cos((tickAngle * Math.PI) / 180);
-          const y1 = 40 - 35 * Math.sin((tickAngle * Math.PI) / 180);
-          const x2 = 48 + 30 * Math.cos((tickAngle * Math.PI) / 180);
-          const y2 = 40 - 30 * Math.sin((tickAngle * Math.PI) / 180);
+          const x1 = 96 + 70 * Math.cos((tickAngle * Math.PI) / 180);
+          const y1 = 80 - 70 * Math.sin((tickAngle * Math.PI) / 180);
+          const x2 = 96 + 60 * Math.cos((tickAngle * Math.PI) / 180);
+          const y2 = 80 - 60 * Math.sin((tickAngle * Math.PI) / 180);
           
           return (
             <line
@@ -56,7 +56,7 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
               x2={x2}
               y2={y2}
               stroke="currentColor"
-              strokeWidth={tick === 0 ? "2" : "1"}
+              strokeWidth={tick === 0 ? "3" : "2"}
               className={tick === 0 ? "text-success" : "text-muted-foreground"}
             />
           );
@@ -66,18 +66,18 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
         {isActive && (
           <g>
             <line
-              x1="48"
-              y1="40"
-              x2={48 + 30 * Math.cos(((angle + 90) * Math.PI) / 180)}
-              y2={40 - 30 * Math.sin(((angle + 90) * Math.PI) / 180)}
+              x1="96"
+              y1="80"
+              x2={96 + 60 * Math.cos(((angle + 90) * Math.PI) / 180)}
+              y2={80 - 60 * Math.sin(((angle + 90) * Math.PI) / 180)}
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="3"
               className={cn("transition-all duration-200", getColor())}
             />
             <circle
-              cx="48"
-              cy="40"
-              r="3"
+              cx="96"
+              cy="80"
+              r="5"
               fill="currentColor"
               className={getColor()}
             />
@@ -86,15 +86,15 @@ export const TuningGauge: React.FC<TuningGaugeProps> = ({ cents = 0, isActive })
       </svg>
       
       {/* Center indicator */}
-      <div className="absolute bottom-0 w-0.5 h-2 bg-success"></div>
+      <div className="absolute bottom-0 w-1 h-4 bg-success"></div>
       
       {/* Labels */}
-      <div className="absolute bottom-0 left-0 text-xs text-muted-foreground">♭</div>
-      <div className="absolute bottom-0 right-0 text-xs text-muted-foreground">♯</div>
+      <div className="absolute bottom-0 left-0 text-sm text-muted-foreground">♭</div>
+      <div className="absolute bottom-0 right-0 text-sm text-muted-foreground">♯</div>
       
       {/* Cents display */}
       {isActive && (
-        <div className="absolute -bottom-5 text-xs font-mono text-center w-full">
+        <div className="absolute -bottom-8 text-sm font-mono text-center w-full">
           <span className={getColor()}>
             {cents > 0 ? '+' : ''}{Math.round(cents)}¢
           </span>
