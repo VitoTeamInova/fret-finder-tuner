@@ -86,7 +86,7 @@ export const GuitarTuner = () => {
     // Check each string to find the best match by frequency proximity
     selectedTuning.frequencies.forEach((targetFreq, index) => {
       const cents = Math.round(1200 * Math.log2(currentPitch.frequency / targetFreq));
-      if (Math.abs(cents) < Math.abs(bestMatch.cents) && Math.abs(cents) <= 50) { // Within 50 cents for better accuracy
+      if (Math.abs(cents) < Math.abs(bestMatch.cents) && Math.abs(cents) <= 100) { // widen window to 100¢ for more robust detection
         bestMatch = { cents, index };
       }
     });

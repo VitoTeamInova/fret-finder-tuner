@@ -26,15 +26,21 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
   }, []);
 
   const autoCorrelate = useCallback((buffer: Float32Array, sampleRate: number): number => {
-    // Based on Chris Wilson's autocorrelation pitch detection
+    // Improved autocorrelation with adaptive sensitivity and windowing
     const SIZE = buffer.length;
+
+    // Root-mean-square to estimate signal level
     let rms = 0;
     for (let i = 0; i < SIZE; i++) {
       const val = buffer[i];
       rms += val * val;
     }
     rms = Math.sqrt(rms / SIZE);
-    if (rms < micSensitivity) return -1; // sensitivity threshold
+
+    // Map micSensitivity (0.001..0.1) so higher values mean lower threshold (more sensitive)
+    const sensNorm = Math.min(1, Math.max(0, (micSensitivity - 0.001) / (0.1 - 0.001)));
+    const levelThreshold = 0.012 - sensNorm * 0.010; // ranges ~0.012 (low) -> ~0.002 (high)
+    if (rms < levelThreshold) return -1;
 
     // Remove DC offset
     let mean = 0;
@@ -42,10 +48,16 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
     mean /= SIZE;
     for (let i = 0; i < SIZE; i++) buffer[i] -= mean;
 
+    // Apply Hann window to reduce spectral leakage
+    const N = SIZE - 1;
+    for (let i = 0; i < SIZE; i++) {
+      const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N);
+      buffer[i] *= w;
+    }
+
     let bestOffset = -1;
     let bestCorrelation = 0;
-    let foundGoodCorrelation = false;
-    const MIN_SAMPLES = 2;      // corresponds to ~22kHz upper bound
+    const MIN_SAMPLES = 2;
     const MAX_SAMPLES = Math.floor(SIZE / 2);
     const correlations = new Array(MAX_SAMPLES).fill(0);
 
@@ -55,21 +67,24 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
         correlation += buffer[i] * buffer[i + offset];
       }
       correlations[offset] = correlation;
-      if (correlation > 0.9 && correlation > bestCorrelation) {
-        foundGoodCorrelation = true;
+      if (correlation > bestCorrelation) {
         bestCorrelation = correlation;
         bestOffset = offset;
       }
     }
 
-    if (!foundGoodCorrelation) return -1;
+    if (bestOffset === -1 || bestCorrelation < 1e-6) return -1;
 
-    // Interpolation for better accuracy
-    const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / (2 * (2 * correlations[bestOffset] - correlations[bestOffset + 1] - correlations[bestOffset - 1]));
+    // Parabolic interpolation around the peak for sub-sample accuracy
+    const prev = correlations[bestOffset - 1] ?? 0;
+    const next = correlations[bestOffset + 1] ?? 0;
+    const denom = 2 * (2 * correlations[bestOffset] - next - prev) || 1;
+    const shift = (next - prev) / denom;
     const period = bestOffset + shift;
 
-    return sampleRate / period;
-  }, []);
+    const freq = sampleRate / period;
+    return isFinite(freq) && freq > 0 ? freq : -1;
+  }, [micSensitivity]);
 
   const detectPitch = useCallback(() => {
     if (!analyserRef.current || !audioContextRef.current) return;
@@ -126,10 +141,22 @@ export const usePitchDetection = (isActive: boolean, toleranceCents: number = 10
       analyserRef.current = audioContextRef.current.createAnalyser();
       
       const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
-      source.connect(analyserRef.current);
+
+      // Prefilter to improve pitch detection (reduce rumble and hiss)
+      const highpass = audioContextRef.current.createBiquadFilter();
+      highpass.type = 'highpass';
+      highpass.frequency.value = 70;
+
+      const lowpass = audioContextRef.current.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.value = 1500;
+
+      source.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(analyserRef.current);
       
       analyserRef.current.fftSize = 16384; // Larger FFT for better high frequency resolution
-      analyserRef.current.smoothingTimeConstant = 0.02; // Even less smoothing for high frequencies
+      analyserRef.current.smoothingTimeConstant = 0.01; // Less smoothing for responsiveness
       
       detectPitch();
     } catch (error) {
