@@ -141,15 +141,17 @@ export const GuitarTuner = () => {
 
   const handleStringSelect = (index: number) => {
     setSelectedString(index);
-    const note = selectedTuning.notes[index];
-    
-    // Extract note and octave from the note string (e.g., "E2" -> note="E", octave="2")
-    const noteMatch = note.match(/([A-G]♭?)(\d)/);
-    if (noteMatch) {
-      const noteName = noteMatch[1].replace('♭', 'b'); // Convert flat symbol to 'b'
-      const octave = noteMatch[2];
-      playTone(selectedTuning.name, noteName, octave);
-    }
+    const freq = selectedTuning.frequencies[index];
+
+    // Convert frequency to nearest note name and octave
+    const noteFromIndex = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'] as const;
+    const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+    const octave = Math.floor(midi / 12) - 1;
+    const name = noteFromIndex[(midi + 1200) % 12];
+    const sharpToFlat: Record<string, string> = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
+    const normalizedName = sharpToFlat[name] ?? name;
+
+    playTone(selectedTuning.name, normalizedName, String(octave));
   };
 
   const displayedNotes = isReversed ? [...selectedTuning.notes].reverse() : selectedTuning.notes;

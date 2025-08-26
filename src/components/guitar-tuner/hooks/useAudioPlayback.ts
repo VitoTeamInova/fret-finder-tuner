@@ -7,17 +7,43 @@ export const useAudioPlayback = () => {
       const tuningSlug = tuningName.toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/♭/g, 'b');
-      
-      const fileName = `${tuningSlug}-${note.toLowerCase()}${octave}.mp3`;
-      const audioPath = `/audio/strings/${fileName}`;
-      
-      const audio = new Audio(audioPath);
-      audio.volume = 0.7;
-      
-      audio.play().catch(error => {
-        console.warn('Could not play audio file:', audioPath, error);
-        // Fallback to synthetic tone
-        playFallbackTone(note, octave);
+
+      const baseNote = note.replace('♭', 'b').replace('♯', '#').toLowerCase();
+      const enharmonicSharps: Record<string, string> = {
+        'c#': 'db',
+        'd#': 'eb',
+        'f#': 'gb',
+        'g#': 'ab',
+        'a#': 'bb',
+      };
+      const flatNote = enharmonicSharps[baseNote] ?? baseNote.replace('#', '');
+
+      const candidates = [
+        `${tuningSlug}-${flatNote}${octave}.mp3`,
+      ];
+
+      if (baseNote.includes('#')) {
+        candidates.push(`${tuningSlug}-${baseNote.replace('#', 'sharp')}${octave}.mp3`);
+        candidates.push(`${tuningSlug}-${baseNote.replace('#', '%23')}${octave}.mp3`);
+      }
+
+      const tryPlay = async () => {
+        for (const f of candidates) {
+          const p = `/audio/strings/${f}`;
+          try {
+            const a = new Audio(p);
+            a.volume = 0.7;
+            await a.play();
+            return true;
+          } catch (e) {
+            // try next
+          }
+        }
+        return false;
+      };
+
+      tryPlay().then((ok) => {
+        if (!ok) playFallbackTone(note, octave);
       });
     } catch (error) {
       console.warn('Audio playback not supported:', error);
@@ -28,11 +54,20 @@ export const useAudioPlayback = () => {
     try {
       // Convert note to frequency for fallback
       const noteFreqs: { [key: string]: number } = {
-        'c': 261.63, 'd': 293.66, 'e': 329.63, 'f': 349.23,
-        'g': 391.95, 'a': 440.00, 'b': 493.88,
-        'db': 277.18, 'eb': 311.13, 'gb': 369.99, 'ab': 415.30, 'bb': 466.16
+        c: 261.63,
+        d: 293.66,
+        e: 329.63,
+        f: 349.23,
+        g: 391.99,
+        a: 440.0,
+        b: 493.88,
+        db: 277.18,
+        eb: 311.13,
+        gb: 369.99,
+        ab: 415.3,
+        bb: 466.16,
       };
-      
+
       const baseFreq = noteFreqs[note.toLowerCase()] || 440;
       const octaveMultiplier = Math.pow(2, parseInt(octave) - 4);
       const frequency = baseFreq * octaveMultiplier;
@@ -87,7 +122,7 @@ export const useAudioPlayback = () => {
       // Second beep slightly higher
       o.frequency.setValueAtTime(1175, now + 0.16);
       g.gain.linearRampToValueAtTime(0.15, now + 0.17);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.30);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
       o.start(now);
       o.stop(now + 0.35);
